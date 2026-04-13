@@ -452,7 +452,7 @@
             if (finalDisplay) finalDisplay.remove();
         }
 
-        // 使用预生成的童声音频
+        // 使用预生成的童声音频（固定时长版本）
         function playChildVoice(month) {
             return new Promise((resolve) => {
                 // 停止当前播放
@@ -463,26 +463,25 @@
 
                 const audio = new Audio(`month-audio/${String(month).padStart(2, '0')}.mp3`);
                 currentAudio = audio;
-
-                // 加快播放速度 100%（2倍速）
-                audio.playbackRate = 2.0;
-
-                audio.onended = () => {
-                    currentAudio = null;
-                    resolve();
-                };
-
-                audio.onerror = () => {
-                    console.warn(`音频加载失败: month-audio/${String(month).padStart(2, '0')}.mp3`);
-                    currentAudio = null;
-                    resolve();
-                };
-
+                
+                // 极速播放：2.8倍速（再加快40%）
+                audio.playbackRate = 2.8;
+                
+                // 固定时长：不等待音频播放完成，统一300ms后继续
+                const fixedDuration = 300; // 每个月份固定300ms
+                
                 audio.play().catch(err => {
                     console.warn('音频播放失败:', err);
-                    currentAudio = null;
-                    resolve();
                 });
+                
+                // 固定时长后resolve，不管音频是否播完
+                setTimeout(() => {
+                    if (currentAudio === audio) {
+                        audio.pause();
+                        currentAudio = null;
+                    }
+                    resolve();
+                }, fixedDuration);
             });
         }
 
@@ -490,15 +489,15 @@
             const data = monthData[month];
             const finalDiv = document.createElement('div');
             finalDiv.className = 'final-display';
-            
+
             finalDiv.innerHTML = `
                 <div class="final-month">${monthNames[month - 1]}</div>
                 <div class="final-days ${data.type}">${data.days}天</div>
             `;
-            
+
             fistContainer.appendChild(finalDiv);
-            
-            // 播放最终语音："X月有XX天呀！"
+
+            // 播放最终语音:"X月有XX天呀!"
             playFinalVoice(month);
         }
 
@@ -511,19 +510,19 @@
 
             const audio = new Audio(`month-audio/final-${String(month).padStart(2, '0')}.mp3`);
             currentAudio = audio;
-            
-            // 加快播放速度 100%（2倍速）
-            audio.playbackRate = 2.0;
-            
+
+            // 极速播放:2.8倍速(再加快40%)
+            audio.playbackRate = 2.8;
+
             audio.onended = () => {
                 currentAudio = null;
             };
-            
+
             audio.onerror = () => {
                 console.warn(`最终语音加载失败: month-audio/final-${String(month).padStart(2, '0')}.mp3`);
                 currentAudio = null;
             };
-            
+
             audio.play().catch(err => {
                 console.warn('最终语音播放失败:', err);
                 currentAudio = null;
@@ -561,7 +560,7 @@
                         await playChildVoice(month);
 
                         resolve();
-                    }, (month - 1) * 2);
+                    }, (month - 1) * 0.6);
                 });
             }
 
