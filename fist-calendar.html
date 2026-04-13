@@ -464,8 +464,8 @@
                 const audio = new Audio(`month-audio/${String(month).padStart(2, '0')}.mp3`);
                 currentAudio = audio;
 
-                // 加快播放速度 50%
-                audio.playbackRate = 1.5;
+                // 加快播放速度 100%（2倍速）
+                audio.playbackRate = 2.0;
 
                 audio.onended = () => {
                     currentAudio = null;
@@ -512,8 +512,8 @@
             const audio = new Audio(`month-audio/final-${String(month).padStart(2, '0')}.mp3`);
             currentAudio = audio;
             
-            // 加快播放速度 50%
-            audio.playbackRate = 1.5;
+            // 加快播放速度 100%（2倍速）
+            audio.playbackRate = 2.0;
             
             audio.onended = () => {
                 currentAudio = null;
@@ -561,7 +561,7 @@
                         await playChildVoice(month);
 
                         resolve();
-                    }, (month - 1) * 7);
+                    }, (month - 1) * 2);
                 });
             }
 
