@@ -452,7 +452,7 @@
             if (finalDisplay) finalDisplay.remove();
         }
 
-        // 使用预生成的童声音频（固定时长版本）
+        // 使用预生成的童声音频(完整播放版本)
         function playChildVoice(month) {
             return new Promise((resolve) => {
                 // 停止当前播放
@@ -463,25 +463,26 @@
 
                 const audio = new Audio(`month-audio/${String(month).padStart(2, '0')}.mp3`);
                 currentAudio = audio;
-                
-                // 极速播放：2.8倍速（再加快40%）
-                audio.playbackRate = 2.8;
-                
-                // 固定时长：不等待音频播放完成，统一300ms后继续
-                const fixedDuration = 300; // 每个月份固定300ms
-                
+
+                // 加快播放速度到2倍
+                audio.playbackRate = 2.0;
+
+                audio.onended = () => {
+                    currentAudio = null;
+                    resolve();
+                };
+
+                audio.onerror = () => {
+                    console.warn(`音频加载失败: month-audio/${String(month).padStart(2, '0')}.mp3`);
+                    currentAudio = null;
+                    resolve();
+                };
+
                 audio.play().catch(err => {
                     console.warn('音频播放失败:', err);
-                });
-                
-                // 固定时长后resolve，不管音频是否播完
-                setTimeout(() => {
-                    if (currentAudio === audio) {
-                        audio.pause();
-                        currentAudio = null;
-                    }
+                    currentAudio = null;
                     resolve();
-                }, fixedDuration);
+                });
             });
         }
 
@@ -511,8 +512,8 @@
             const audio = new Audio(`month-audio/final-${String(month).padStart(2, '0')}.mp3`);
             currentAudio = audio;
 
-            // 极速播放:2.8倍速(再加快40%)
-            audio.playbackRate = 2.8;
+            // 加快播放速度到2倍
+            audio.playbackRate = 2.0;
 
             audio.onended = () => {
                 currentAudio = null;
@@ -543,25 +544,33 @@
 
             // 先完整轮播所有月份
             for (let month = 1; month <= targetMonth; month++) {
-                await new Promise(resolve => {
-                    currentPlayback = setTimeout(async () => {
-                        // 清除之前的标签,只保留当前月份
-                        clearLabels();
+                // 清除之前的标签,只保留当前月份
+                clearLabels();
 
-                        const data = monthData[month];
-                        const label = document.createElement('div');
-                        label.className = `month-label ${data.type}`;
-                        label.textContent = `${monthNames[month - 1]}${typeNames[data.type]}`;
-                        label.style.left = `${data.position.x}%`;
-                        label.style.top = `${data.position.y}%`;
-                        fistContainer.appendChild(label);
+                const data = monthData[month];
+                const label = document.createElement('div');
+                label.className = `month-label ${data.type}`;
+                label.textContent = `${monthNames[month - 1]}${typeNames[data.type]}`;
+                label.style.left = `${data.position.x}%`;
+                label.style.top = `${data.position.y}%`;
+                fistContainer.appendChild(label);
 
-                        // 播放童声音频
-                        await playChildVoice(month);
+                // 记录开始时间
+                const startTime = Date.now();
 
-                        resolve();
-                    }, (month - 1) * 0.6);
-                });
+                // 播放童声音频(完整播放)
+                await playChildVoice(month);
+
+                // 计算已用时间
+                const elapsed = Date.now() - startTime;
+
+                // 补充延迟,确保从这个月开始到下个月开始总共1秒
+                const targetInterval = 1000; // 1秒
+                const remainingDelay = Math.max(0, targetInterval - elapsed);
+
+                if (remainingDelay > 0 && month < targetMonth) {
+                    await new Promise(resolve => setTimeout(resolve, remainingDelay));
+                }
             }
 
             // 轮播完成后,延迟300ms再显示最终样式
