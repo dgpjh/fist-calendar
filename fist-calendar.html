@@ -490,18 +490,49 @@
             const data = monthData[month];
             const finalDiv = document.createElement('div');
             finalDiv.className = 'final-display';
-
+            
             finalDiv.innerHTML = `
                 <div class="final-month">${monthNames[month - 1]}</div>
                 <div class="final-days ${data.type}">${data.days}天</div>
             `;
-
+            
             fistContainer.appendChild(finalDiv);
+            
+            // 播放最终语音："X月有XX天呀！"
+            playFinalVoice(month);
+        }
+
+        // 播放最终展示语音
+        function playFinalVoice(month) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const audio = new Audio(`month-audio/final-${String(month).padStart(2, '0')}.mp3`);
+            currentAudio = audio;
+            
+            // 加快播放速度 50%
+            audio.playbackRate = 1.5;
+            
+            audio.onended = () => {
+                currentAudio = null;
+            };
+            
+            audio.onerror = () => {
+                console.warn(`最终语音加载失败: month-audio/final-${String(month).padStart(2, '0')}.mp3`);
+                currentAudio = null;
+            };
+            
+            audio.play().catch(err => {
+                console.warn('最终语音播放失败:', err);
+                currentAudio = null;
+            });
         }
 
         async function showMonthLabels(targetMonth) {
             clearLabels();
-            
+
             // 停止之前的播放队列
             if (currentPlayback) {
                 clearTimeout(currentPlayback);
@@ -528,7 +559,7 @@
 
                         // 播放童声音频
                         await playChildVoice(month);
-                        
+
                         resolve();
                     }, (month - 1) * 7);
                 });
@@ -536,7 +567,7 @@
 
             // 轮播完成后,延迟300ms再显示最终样式
             await new Promise(resolve => setTimeout(resolve, 300));
-            
+
             // 显示最终大样式
             clearLabels();
             showFinalDisplay(targetMonth);
