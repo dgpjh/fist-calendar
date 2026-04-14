@@ -582,12 +582,16 @@
         }
 
         monthButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const selectedMonth = parseInt(button.dataset.month);
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const selectedMonth = parseInt(this.dataset.month);
+                console.log('点击月份:', selectedMonth); // 调试日志
 
                 // 更新按钮选中状态
                 monthButtons.forEach(btn => btn.classList.remove('selected'));
-                button.classList.add('selected');
+                this.classList.add('selected');
 
                 // 显示标注
                 currentSelectedMonth = selectedMonth;
@@ -595,7 +599,12 @@
             });
         });
 
-        resetBtn.addEventListener('click', () => {
+        resetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('点击重置'); // 调试日志
+            
             clearLabels();
             monthButtons.forEach(btn => btn.classList.remove('selected'));
             currentSelectedMonth = null;
